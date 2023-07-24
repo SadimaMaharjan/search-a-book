@@ -1,21 +1,33 @@
 const express = require("express");
 const { ApolloServer } = require("apollo-server-express");
+const cors = require("cors"); // Import the cors package
 const path = require("path");
 const { authMiddleware } = require("./utils/auth");
+
 const { typeDefs, resolvers } = require("./schemas");
 const db = require("./config/connection");
 
+const PORT = process.env.PORT || 3003;
 const app = express();
-const PORT = process.env.PORT || 3001;
+// Configure CORS with credentials support
+const corsOptions = {
+  origin: "*", // Replace with the origin of your client
+  credentials: true, // Enable credentials (e.g., cookies, HTTP authentication)
+  allowedHeaders: ["Authorization", "Content-Type"], // Add any other headers you want to allow
+};
 const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: authMiddleware,
 });
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+// First, add the cors middleware to allow preflight requests
+app.options("*", cors(corsOptions));
 
-// if we're in production, serve client/build as static assets
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(cors(corsOptions));
+
+// Serve up static assets
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../client/build")));
 }
@@ -27,11 +39,7 @@ app.get("/", (req, res) => {
 // Create a new instance of an Apollo server with the GraphQL schema
 const startApolloServer = async () => {
   await server.start();
-  server.applyMiddleware({
-    app,
-    path: "/graphql",
-    cors: { origin: "https://studio.apollographql.com", credentials: true },
-  });
+  server.applyMiddleware({ app });
 
   db.once("open", () => {
     app.listen(PORT, () => {

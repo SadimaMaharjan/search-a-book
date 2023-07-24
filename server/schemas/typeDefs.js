@@ -9,27 +9,27 @@ const typeDefs = gql`
     savedBooks: [Book]
   }
 
+  type Book {
+    bookId: ID!
+    authors: [String]
+    description: String
+    image: String
+    link: String
+    title: String!
+  }
+
   type Auth {
     token: ID!
     user: User
   }
 
-  type Book {
-    bookId: ID!
-    title: String!
-    authors: [String]
-    description: String
-    image: String
-    link: String
-  }
-
   input BookInput {
-    bookId: String!
     authors: [String]
     description: String!
-    title: String!
+    bookId: String!
     image: String
     link: String
+    title: String!
   }
 
   type Query {
